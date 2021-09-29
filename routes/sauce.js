@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-const sauceCtrl = require('../controllers/sauce')
+const auth = require('../middleware/auth');
 
-router.post('/', sauceCtrl.addSauce);
-router.get('/:id', sauceCtrl.getOneSauce);
-router.put('/:id', sauceCtrl.modifySauce);
-router.delete('/:id', sauceCtrl.deleteSauce);
-router.get('/', sauceCtrl.getAllSauces);
+const sauceCtrl = require('../controllers/sauce');
+
+router.get('/', auth, sauceCtrl.getAllSauces);
+router.post('/', auth, sauceCtrl.addSauce);
+router.get('/:id', auth, sauceCtrl.getOneSauce);
+router.put('/:id', auth, sauceCtrl.modifySauce);
+router.delete('/:id', auth, sauceCtrl.deleteSauce);
+
 // TO ADD POST ROUTE FOR LIKE FUNCTION
 
 module.exports = router;

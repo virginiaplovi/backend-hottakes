@@ -1,13 +1,14 @@
 const Sauce = require('../models/sauce');
 
 exports.addSauce = (req, res, next) => {
+    req.body.sauce = JSON.parse(req.body.sauce);
     const sauce = new Sauce({
         userId: req.body.sauce.userId,
         name: req.body.sauce.name,
         manufacturer: req.body.sauce.manufacturer,
         description: req.body.sauce.description,
         mainPepper: req.body.sauce.mainPepper,
-        imageUrl: req.body.sauce.imageUrl,
+        // imageUrl: req.body.sauce.imageUrl,
         // MODIFY AFTER INSTALLING MULTER ^--
         heat: req.body.sauce.heat,
         likes: 0,
@@ -95,8 +96,8 @@ exports.deleteSauce = (req, res, next) => {
 
 exports.getAllSauces = (req, res, next) => {
     Sauce.find().then(
-        (sauce) => {
-            res.status(200).json(sauce);
+        (sauces) => {
+            res.status(200).json(sauces);
         }
     ).catch(
         (error) => {
