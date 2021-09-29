@@ -1,6 +1,7 @@
 const Sauce = require('../models/sauce');
 
 exports.addSauce = (req, res, next) => {
+    const url = req.protocol + '://' + req.get('host');
     req.body.sauce = JSON.parse(req.body.sauce);
     const sauce = new Sauce({
         userId: req.body.sauce.userId,
@@ -8,8 +9,7 @@ exports.addSauce = (req, res, next) => {
         manufacturer: req.body.sauce.manufacturer,
         description: req.body.sauce.description,
         mainPepper: req.body.sauce.mainPepper,
-        // imageUrl: req.body.sauce.imageUrl,
-        // MODIFY AFTER INSTALLING MULTER ^--
+        imageUrl: url + '/images/' + req.file.filename,
         heat: req.body.sauce.heat,
         likes: 0,
         dislikes: 0,
