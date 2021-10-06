@@ -1,5 +1,7 @@
 const Sauce = require('../models/sauce');
 const fs = require('fs');
+const sauce = require('../models/sauce');
+const user = require('../models/user');
 
 exports.addSauce = (req, res, next) => {
     const url = req.protocol + '://' + req.get('host');
@@ -127,6 +129,61 @@ exports.getAllSauces = (req, res, next) => {
     Sauce.find().then(
         (sauces) => {
             res.status(200).json(sauces);
+        }
+    ).catch(
+        (error) => {
+            res.status(400).json({
+                error: error
+            });
+        }
+    );
+};
+
+exports.likeSauce = async (req, res, next) => {
+    let idSauce = await Sauce.findById(req.params.id);
+    
+    if (req.body.like === 1) {
+        if (!idSauce.usersLiked.includes(req.body.userId)) {
+            idSauce.usersLiked.push(req.body.userId);
+            idSauce.likes++ ;
+            if (idSauce.usersDisliked.includes(req.body.userId)) {
+                idSauce.usersDisliked.remove(req.body.userId);
+                idSauce.dislikes--;
+            }
+        } else {
+            res.status(201).json({
+                message: 'You have already liked this sauce!'
+            });
+        }
+    }
+    if (req.body.like === -1) {
+        if (!idSauce.usersDisliked.includes(req.body.userId)) {
+            idSauce.usersDisliked.push(req.body.userId);
+            idSauce.dislikes++;
+            if (idSauce.usersLiked.includes(req.body.userId)) {
+                idSauce.usersLiked.remove(req.body.userId);
+                idSauce.likes--;
+            }
+        } else {
+            res.status(201).json({
+                message: 'You have already disliked this sauce!'
+            });
+        }
+    }
+    if (req.body.like === 0) {
+        if (idSauce.usersLiked.includes(req.body.userId)) {
+            idSauce.usersLiked.remove(req.body.userId);
+            idSauce.likes--;
+        } else if (idSauce.usersDisliked.includes(req.body.userId)) {
+            idSauce.usersDisliked.remove(req.body.userId);
+            idSauce.dislikes--;
+        }
+    }
+    idSauce.save().then(
+        () => {
+            res.status(201).json({
+                message: 'Preference updated successfully!'
+            });
         }
     ).catch(
         (error) => {
