@@ -1,7 +1,5 @@
 const Sauce = require('../models/sauce');
-const fs = require('fs');
-const sauce = require('../models/sauce');
-const user = require('../models/user');
+const fs = require('fs'); //file system package
 
 exports.addSauce = (req, res, next) => {
     const url = req.protocol + '://' + req.get('host');
@@ -52,6 +50,7 @@ exports.getOneSauce = (req, res, next) => {
 
 exports.modifySauce = (req, res, next) => {
     let sauce = new Sauce({ _id: req.params._id });
+    //if the request has a new file
     if (req.file) {
         const url = req.protocol + '://' + req.get('host');
         req.body.sauce = JSON.parse(req.body.sauce);
@@ -62,7 +61,7 @@ exports.modifySauce = (req, res, next) => {
             manufacturer: req.body.sauce.manufacturer,
             description: req.body.sauce.description,
             mainPepper: req.body.sauce.mainPepper,
-            imageUrl: url + '/images/' + req.file.filename,
+            imageUrl: url + '/images/' + req.file.filename, // generate image URL
             heat: req.body.sauce.heat,
             likes: 0,
             dislikes: 0,
@@ -105,6 +104,7 @@ exports.deleteSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id }).then(
         (sauce) => {
             const filename = sauce.imageUrl.split('/images/')[1];
+            //delete img from folder and sauce from database
             fs.unlink('images/' + filename, () => {
                 Sauce.deleteOne({ _id: req.params.id }).then(
                     () => {
@@ -141,44 +141,36 @@ exports.getAllSauces = (req, res, next) => {
 
 exports.likeSauce = async (req, res, next) => {
     let idSauce = await Sauce.findById(req.params.id);
+
+    if (req.body.like === 1 && !idSauce.usersLiked.includes(req.body.userId)) { //if like = 1 and userId is not in userLiked array 
+        idSauce.usersLiked.push(req.body.userId); // push userId in the array
+        idSauce.likes++; // add 1 like
+
+    } else if (req.body.like === 1 && idSauce.usersLiked.includes(req.body.userId)) { // if the userId is already in userLiked array send message
+        res.status(201).json({
+            message: 'You have already liked this sauce!'
+        });
+    }
+
+    if (req.body.like === -1 && !idSauce.usersDisliked.includes(req.body.userId)) { // if like -1 and userId is not in userDisliked array
+        idSauce.usersDisliked.push(req.body.userId); // push userId in the array
+        idSauce.dislikes++; // add 1 dislike
+
+    } else if (req.body.like === -1 && idSauce.usersDisliked.includes(req.body.userId)) { // if the userId is already in userDislike array send message
+        res.status(201).json({
+            message: 'You have already disliked this sauce!'
+        });
+    }
+
+    if (req.body.like === 0 && idSauce.usersLiked.includes(req.body.userId)) { // if like = 0 and userId is in userLiked
+            idSauce.usersLiked.remove(req.body.userId); // remove userId from the array
+            idSauce.likes--; //remove 1 like
+
+        } else if (req.body.like === 0 && idSauce.usersDisliked.includes(req.body.userId)) { // if like = 0 and userId is in userDisliked
+            idSauce.usersDisliked.remove(req.body.userId); // remove userId from the array
+            idSauce.dislikes--; // remove 1 dislike
+        }
     
-    if (req.body.like === 1) {
-        if (!idSauce.usersLiked.includes(req.body.userId)) {
-            idSauce.usersLiked.push(req.body.userId);
-            idSauce.likes++ ;
-            if (idSauce.usersDisliked.includes(req.body.userId)) {
-                idSauce.usersDisliked.remove(req.body.userId);
-                idSauce.dislikes--;
-            }
-        } else {
-            res.status(201).json({
-                message: 'You have already liked this sauce!'
-            });
-        }
-    }
-    if (req.body.like === -1) {
-        if (!idSauce.usersDisliked.includes(req.body.userId)) {
-            idSauce.usersDisliked.push(req.body.userId);
-            idSauce.dislikes++;
-            if (idSauce.usersLiked.includes(req.body.userId)) {
-                idSauce.usersLiked.remove(req.body.userId);
-                idSauce.likes--;
-            }
-        } else {
-            res.status(201).json({
-                message: 'You have already disliked this sauce!'
-            });
-        }
-    }
-    if (req.body.like === 0) {
-        if (idSauce.usersLiked.includes(req.body.userId)) {
-            idSauce.usersLiked.remove(req.body.userId);
-            idSauce.likes--;
-        } else if (idSauce.usersDisliked.includes(req.body.userId)) {
-            idSauce.usersDisliked.remove(req.body.userId);
-            idSauce.dislikes--;
-        }
-    }
     idSauce.save().then(
         () => {
             res.status(201).json({
